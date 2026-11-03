@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CycleSync — Phase, Hormone & Vibe Radar</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#131c2e',
+              900: '#0f172a',
+              950: '#070b14',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070b14;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    /* Custom Range Slider Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: #1e293b;
+      height: 8px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -5px;
+      background-color: #f43f5e;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background-color: #fb7185;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.65);
+    }
+    /* Date input color scheme fix for dark mode */
+    input[type="date"] {
+      color-scheme: dark;
+    }
+  </style>
+</head>
+<body class="min-h-screen selection:bg-rose-500/30 selection:text-rose-200 pb-16">
+
+  <!-- Ambient Background Glows -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+    <div id="ambientGlow1" class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-500/10 blur-[130px] transition-colors duration-700"></div>
+    <div id="ambientGlow2" class="absolute top-1/3 -right-32 w-96 h-96 rounded-full bg-amber-500/10 blur-[130px] transition-colors duration-700"></div>
+    <div class="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-purple-500/10 blur-[130px]"></div>
+  </div>
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 via-amber-500 to-sky-500 p-[1.5px] shadow-lg shadow-rose-500/10">
+          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-5 h-5 text-rose-400"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">CycleSync <span class="text-rose-400 font-semibold">Vibe Radar</span></h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
+              AuDHD-Friendly Visual Guide
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Biological Hormone Tracker, Mood Forecast & Texting Playbook</p>
+        </div>
+      </div>
+
+      <!-- Quick Preset & Reset Actions -->
+      <div class="flex items-center gap-2">
+        <button id="btnResetOct13" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 transition-all active:scale-95">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>Reset to Oct 13 Preset</span>
+        </button>
+        <button id="btnExplainToggle" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700/90 text-amber-300 border border-slate-700 transition-all active:scale-95" title="Toggle Simple Spaceship Analogy Mode">
+          <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+          <span id="explainModeLabel">Spaceship Mode: ON</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+    <!-- 1. INPUT CONTROLS PANEL -->
+    <section class="glass-card rounded-2xl p-5 shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-sky-400"></i>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Cycle Parameters & Date Jumper</h2>
+        </div>
+        <span id="savedStatusBadge" class="text-[11px] font-mono text-emerald-400 flex items-center gap-1 opacity-90">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          Synced to LocalStorage
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Control 1: Last Period Start Date -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <label for="lastPeriodInput" class="block text-xs font-medium text-slate-400 mb-1">
+              Last Period Start Date (Day 1)
+            </label>
+            <input
+              type="date"
+              id="lastPeriodInput"
+              value="2026-10-13"
+              class="w-full bg-slate-950 border border-slate-700/80 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 text-sm font-mono text-white outline-none transition"
+            />
+          </div>
+          <div class="mt-2.5 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Default: <strong class="text-slate-200">Oct 13, 2026</strong></span>
+            <button id="btnSetOct13Only" class="text-rose-400 hover:text-rose-300 underline font-medium">Set Oct 13</button>
+          </div>
+        </div>
+
+        <!-- Control 2: Target / Check Date -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <label for="targetDateInput" class="block text-xs font-medium text-slate-400 mb-1">
+              Target / Check Date
+            </label>
+            <input
+              type="date"
+              id="targetDateInput"
+              value="2026-10-24"
+              class="w-full bg-slate-950 border border-slate-700/80 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg px-3 py-2 text-sm font-mono text-white outline-none transition"
+            />
+          </div>
+          <!-- Quick Jump Buttons -->
+          <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <button data-jump="today" class="jump-btn px-2 py-1 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[11px] font-medium transition">
+              Today (Oct 24)
+            </button>
+            <button data-jump="-1" class="jump-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono transition">
+              -1d
+            </button>
+            <button data-jump="1" class="jump-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono transition">
+              +1d
+            </button>
+            <button data-jump="3" class="jump-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono transition">
+              +3d
+            </button>
+            <button data-jump="7" class="jump-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono transition">
+              +7d
+            </button>
+          </div>
+        </div>
+
+        <!-- Control 3: Average Cycle Length -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="cycleLengthSlider" class="text-xs font-medium text-slate-400">Average Cycle Length</label>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-rose-400 font-mono text-xs font-bold" id="cycleLengthValue">28 Days</span>
+            </div>
+            <input
+              type="range"
+              id="cycleLengthSlider"
+              min="21"
+              max="35"
+              value="28"
+              class="w-full"
+            />
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-500 font-mono mt-2">
+            <span>21d (Short)</span>
+            <span>28d (Std)</span>
+            <span>35d (Long)</span>
+          </div>
+        </div>
+
+        <!-- Control 4: Period Duration -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="periodLengthSlider" class="text-xs font-medium text-slate-400">Period Duration</label>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-rose-400 font-mono text-xs font-bold" id="periodLengthValue">5 Days</span>
+            </div>
+            <input
+              type="range"
+              id="periodLengthSlider"
+              min="3"
+              max="7"
+              value="5"
+              class="w-full"
+            />
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-500 font-mono mt-2">
+            <span>3 Days</span>
+            <span>5 Days (Avg)</span>
+            <span>7 Days</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. HERO STATUS & NEXT 7 DAYS STRIP -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left 5 Cols: Active Cycle Day Hero Card -->
+      <div id="heroPhaseCard" class="lg:col-span-5 glass-card rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between border-t-4 border-t-sky-400 transition-all duration-300">
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <span id="targetDateFormatted" class="text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-900/90 text-slate-300 border border-slate-700">
+              Sat, Oct 24, 2026
+            </span>
+            <span id="phaseBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/40">
+              <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+              Follicular Phase
+            </span>
+          </div>
+
+          <div class="flex items-baseline gap-4 my-2">
+            <div class="text-5xl sm:text-6xl font-extrabold tracking-tight text-white font-mono" id="cycleDayDisplay">
+              Day 12
+            </div>
+            <div class="text-sm text-slate-400">
+              of <span id="totalCycleDaysHero" class="font-mono text-slate-200">28</span>-day cycle
+            </div>
+          </div>
+
+          <p id="phaseTagline" class="text-base font-medium text-slate-200 mt-2">
+            Rising Estrogen Peak — High Social Energy & Upbeat Vibe
+          </p>
+
+          <!-- Progress Bar within Current Cycle -->
+          <div class="mt-5">
+            <div class="flex justify-between text-xs font-mono text-slate-400 mb-1.5">
+              <span id="cycleProgressLabel">Cycle Progress: 43%</span>
+              <span id="daysUntilPeriodLabel" class="text-rose-300 font-semibold">Next Period in 17 Days (Nov 10)</span>
+            </div>
+            <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-slate-800 flex p-0.5 gap-0.5" id="segmentedCycleBar">
+              <!-- Dynamically populated phase segments -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Hormone Meters -->
+        <div class="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-3 gap-3">
+          <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span>Estrogen</span>
+              <span id="estValText" class="font-mono text-sky-400 font-bold">88%</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div id="estBar" class="h-full bg-sky-400 rounded-full transition-all duration-300" style="width: 88%"></div>
+            </div>
+            <p id="estStatusText" class="text-[11px] text-slate-400 mt-1.5">Near peak (Mood boost)</p>
+          </div>
+
+          <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span>Progesterone</span>
+              <span id="progValText" class="font-mono text-purple-400 font-bold">12%</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div id="progBar" class="h-full bg-purple-400 rounded-full transition-all duration-300" style="width: 12%"></div>
+            </div>
+            <p id="progStatusText" class="text-[11px] text-slate-400 mt-1.5">Low (Chill baseline)</p>
+          </div>
+
+          <div class="bg-slate-900/70 rounded-xl p-3 border border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span>Social Battery</span>
+              <span id="energyValText" class="font-mono text-amber-400 font-bold">92%</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div id="energyBar" class="h-full bg-amber-400 rounded-full transition-all duration-300" style="width: 92%"></div>
+            </div>
+            <p id="energyStatusText" class="text-[11px] text-slate-400 mt-1.5">Very High / Outgoing</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right 7 Cols: Mood & Biology Forecast + Communication & Vibe Guide -->
+      <div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Mood & Energy Biological Forecast Card -->
+        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                  <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                </div>
+                <h3 class="font-bold text-sm sm:text-base text-white">Mood & Biology Forecast</h3>
+              </div>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300" id="ovulationCountdownBadge">
+                Ovulation in 2d
+              </span>
+            </div>
+
+            <div id="biologyDescription" class="text-sm text-slate-300 leading-relaxed space-y-2.5">
+              <!-- Populated dynamically -->
+            </div>
+
+            <!-- Spaceship / 10-Year-Old Analogy Box -->
+            <div id="spaceshipBox" class="mt-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200/90 space-y-1">
+              <div class="font-bold flex items-center gap-1.5 text-amber-300">
+                <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+                <span>Brain Spaceship Translation:</span>
+              </div>
+              <p id="spaceshipText" class="leading-relaxed text-slate-200"></p>
+            </div>
+          </div>
+
+          <!-- Expected Mood Tags -->
+          <div class="mt-4 pt-3 border-t border-slate-800/80">
+            <span class="text-[11px] font-mono uppercase text-slate-400 block mb-2">Typical Vibe Signals Today:</span>
+            <div id="moodPillsContainer" class="flex flex-wrap gap-1.5">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Communication, Texting & Flirting Playbook Card -->
+        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <i data-lucide="message-circle-heart" class="w-4 h-4"></i>
+                </div>
+                <h3 class="font-bold text-sm sm:text-base text-white">Texting & Vibe Playbook</h3>
+              </div>
+              <span id="flirtWindowBadge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Prime Window
+              </span>
+            </div>
+
+            <div class="space-y-3 text-sm">
+              <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <div class="text-xs font-bold uppercase tracking-wider text-emerald-300 mb-1 flex items-center gap-1.5">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                  <span>Best Moves Right Now</span>
+                </div>
+                <p id="bestMovesText" class="text-slate-200 text-xs sm:text-sm leading-relaxed"></p>
+              </div>
+
+              <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                <div class="text-xs font-bold uppercase tracking-wider text-rose-300 mb-1 flex items-center gap-1.5">
+                  <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                  <span>What to Avoid & Reality Check</span>
+                </div>
+                <p id="avoidMovesText" class="text-slate-200 text-xs sm:text-sm leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sample Text / Action Prompt -->
+          <div class="mt-4 pt-3 border-t border-slate-800/80">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-mono uppercase text-slate-400">Suggested Tone / Text Idea:</span>
+              <button id="btnCopyPrompt" class="text-[11px] text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span id="copyBtnText">Copy Idea</span>
+              </button>
+            </div>
+            <div id="sampleTextPrompt" class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 italic font-sans">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2B. 7-DAY ROLLING FORECAST STRIP (TODAY + NEXT 6 DAYS) -->
+    <section class="glass-card rounded-2xl p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="calendar-range" class="w-4 h-4 text-amber-400"></i>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">7-Day Rolling Phase & Mood Forecast (Click any day to inspect)</h2>
+        </div>
+        <span class="text-xs text-slate-400">Starts from your selected Target Date</span>
+      </div>
+      <div id="sevenDayStrip" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+        <!-- Dynamically populated 7 cards -->
+      </div>
+    </section>
+
+    <!-- 3. INTERACTIVE HORMONE & ENERGY CURVE VISUALIZER -->
+    <section class="glass-card rounded-2xl p-5 shadow-xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-rose-400"></i>
+            <h2 class="text-sm sm:text-base font-bold text-white">Interactive Hormone & Social Energy Curve</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Click or drag anywhere across the chart to scrub through Cycle Days and see real-time hormone shifts</p>
+        </div>
+
+        <!-- Chart Legend -->
+        <div class="flex flex-wrap items-center gap-4 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-1 rounded-full bg-sky-400 inline-block"></span>
+            <span class="text-slate-300">Estrogen (Mood/Energy)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-1 rounded-full bg-purple-400 inline-block"></span>
+            <span class="text-slate-300">Progesterone (Calm/Rest)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-1 rounded-full bg-amber-400 inline-block"></span>
+            <span class="text-slate-300">LH Surge (Ovulation Peak)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SVG Interactive Chart Container -->
+      <div class="relative w-full bg-slate-950/90 border border-slate-800/90 rounded-xl p-2 sm:p-4 select-none overflow-hidden">
+        <svg id="hormoneChartSvg" viewBox="0 0 900 310" class="w-full h-auto cursor-crosshair touch-none"></svg>
+      </div>
+
+      <!-- Quick Day Scrubber Slider Under Chart -->
+      <div class="mt-4 flex items-center gap-4 bg-slate-900/70 px-4 py-2.5 rounded-xl border border-slate-800">
+        <span class="text-xs font-mono text-slate-400 whitespace-nowrap">Scrub Cycle Day:</span>
+        <input type="range" id="chartDayScrubber" min="1" max="28" value="12" class="w-full" />
+        <span id="scrubberDayReadout" class="text-xs font-mono font-bold text-sky-400 whitespace-nowrap">Day 12 (Oct 24)</span>
+      </div>
+    </section>
+
+    <!-- 4. COLOR-CODED MONTHLY CALENDAR & NEXT 3 CYCLES PREDICTOR -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left 7 Cols: Interactive Color-Coded Monthly Calendar -->
+      <div class="lg:col-span-7 glass-card rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar" class="w-4 h-4 text-sky-400"></i>
+            <h2 class="text-base font-bold text-white">Color-Coded Phase Calendar</h2>
+          </div>
+
+          <!-- Month Navigation -->
+          <div class="flex items-center gap-2">
+            <button id="btnPrevMonth" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <span id="calendarMonthTitle" class="text-sm font-bold font-mono text-white min-w-[130px] text-center">
+              October 2026
+            </span>
+            <button id="btnNextMonth" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Phase Legend Pills -->
+        <div class="flex flex-wrap items-center gap-2 mb-4 text-[11px]">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span> Menstrual
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30">
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span> Follicular
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Ovulation Window
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Early Luteal
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span> Late Luteal / PMS
+          </span>
+        </div>
+
+        <!-- Days of Week Header -->
+        <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-mono text-slate-400 mb-2">
+          <div>Sun</div>
+          <div>Mon</div>
+          <div>Tue</div>
+          <div>Wed</div>
+          <div>Thu</div>
+          <div>Fri</div>
+          <div>Sat</div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Right 5 Cols: Next 3 Cycles Predictor + AuDHD Calm Reminder -->
+      <div class="lg:col-span-5 flex flex-col justify-between gap-6">
+        <div class="glass-card rounded-2xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="Sparkles" class="w-4 h-4 text-amber-400"></i>
+            <h2 class="text-base font-bold text-white">Upcoming 3 Cycles & Peak Vibe Windows</h2>
+          </div>
+          <p class="text-xs text-slate-400 mb-4">
+            Projected dates for her next periods, highest-energy social windows (Follicular + Ovulation), and extra-care PMS days.
+          </p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400">
+                  <th class="py-2 pr-2">Cycle</th>
+                  <th class="py-2 px-2 text-rose-300">Period Starts</th>
+                  <th class="py-2 px-2 text-amber-300">Peak Social Window</th>
+                  <th class="py-2 pl-2 text-purple-300">Caring / PMS</th>
+                </tr>
+              </thead>
+              <tbody id="upcomingCyclesTable" class="divide-y divide-slate-800/70 text-xs font-mono">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- AuDHD Anti-Overthinking / RSD Shield Card -->
+        <div class="glass-card rounded-2xl p-5 border border-emerald-500/25 bg-gradient-to-br from-slate-900/90 to-emerald-950/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <i data-lucide="heart-handshake" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-sm font-bold text-emerald-300">AuDHD Anti-Overthinking Shield</h3>
+            </div>
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">RSD Check</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed mb-3">
+            Remember: A cycle calculator shows <strong class="text-white">biological weather</strong>, not a script. Real-life events (exams, Garba nights, family, sleep, battery) always override hormones on any single day.
+          </p>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div class="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-300">
+              <strong class="text-emerald-400 block mb-0.5">Golden Rule #1:</strong>
+              Keep tracking 100% invisible. Use it to be thoughtful, never bring up her cycle math out loud.
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-300">
+              <strong class="text-sky-400 block mb-0.5">Golden Rule #2:</strong>
+              Wait 24 hours before analyzing a quiet DM. Double-inhale + slow exhale to calm your vagus nerve.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /********************************************************************
+     * STATE & CONSTANTS
+     ********************************************************************/
+    const STORAGE_KEY = 'cyclesync_vibe_radar_v1';
+    const DEFAULT_STATE = {
+      lastPeriodDate: '2026-10-13',
+      targetDate: '2026-10-24', // Current date default
+      cycleLength: 28,
+      periodLength: 5,
+      spaceshipMode: true
+    };
+
+    let state = { ...DEFAULT_STATE };
+    let calendarViewYear = 2026;
+    let calendarViewMonth = 9; // 0-indexed: 9 = October
+
+    /********************************************************************
+     * DATE HELPERS (UTC-SAFE TO PREVENT TIMEZONE OFF-BY-ONE BUGS)
+     ********************************************************************/
+    function parseISODate(isoStr) {
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+
+    function toISODate(dateObj) {
+      const y = dateObj.getUTCFullYear();
+      const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function addDaysISO(isoStr, daysToAdd) {
+      const dt = parseISODate(isoStr);
+      dt.setUTCDate(dt.getUTCDate() + daysToAdd);
+      return toISODate(dt);
+    }
+
+    function diffInDays(isoTarget, isoStart) {
+      const d1 = parseISODate(isoTarget);
+      const d2 = parseISODate(isoStart);
+      return Math.round((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    function formatShortDate(isoStr) {
+      const dt = parseISODate(isoStr);
+      return dt.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        timeZone: 'UTC'
+      });
+    }
+
+    function formatFullDate(isoStr) {
+      const dt = parseISODate(isoStr);
+      return dt.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC'
+      });
+    }
+
+    /********************************************************************
+     * BIOLOGICAL CYCLE ENGINE (PHASE, HORMONES & VIBE DATA)
+     ********************************************************************/
+    function getPhaseBounds(cycleLen, periodLen) {
+      // Luteal phase is biologically ~14 days before next period
+      const ovulationCenter = Math.max(periodLen + 3, cycleLen - 14);
+      const ovStart = ovulationCenter - 1;
+      const ovEnd = ovulationCenter + 1;
+      const earlyLutealEnd = Math.max(ovEnd + 2, cycleLen - 6);
+
+      return {
+        menstrualEnd: periodLen,
+        follicularStart: periodLen + 1,
+        follicularEnd: ovStart - 1,
+        ovulationStart: ovStart,
+        ovulationCenter: ovulationCenter,
+        ovulationEnd: ovEnd,
+        earlyLutealStart: ovEnd + 1,
+        earlyLutealEnd: earlyLutealEnd,
+        lateLutealStart: earlyLutealEnd + 1,
+        cycleLen: cycleLen
+      };
+    }
+
+    /**
+     * Computes normalized hormone levels (0-100) and phase metadata for any cycle day (1..cycleLen)
+     */
+    function getCycleDayData(cycleDay, cycleLen, periodLen) {
+      const bounds = getPhaseBounds(cycleLen, periodLen);
+      const ovDay = bounds.ovulationCenter;
+
+      // 1. Estrogen curve (0-100): starts low (~18), climbs steeply in follicular, peaks at ovDay-1 (96), dips, secondary bump in mid-luteal (55), drops to 15
+      let estrogen = 20;
+      if (cycleDay <= periodLen) {
+        estrogen = 15 + (cycleDay / periodLen) * 12;
+      } else if (cycleDay <= ovDay) {
+        const progress = (cycleDay - periodLen) / Math.max(1, ovDay - periodLen);
+        estrogen = 27 + Math.pow(progress, 1.15) * 69;
+      } else if (cycleDay <= ovDay + 2) {
+        estrogen = 96 - ((cycleDay - ovDay) / 2) * 42;
+      } else {
+        const lutealLen = cycleLen - (ovDay + 2);
+        const lProg = (cycleDay - (ovDay + 2)) / Math.max(1, lutealLen);
+        // Bell bump peaking mid-luteal
+        estrogen = 20 + Math.sin(lProg * Math.PI) * 42;
+      }
+
+      // 2. Progesterone curve (0-100): stays low (<15) until ovulation, then climbs to ~92 in mid-luteal, drops before period
+      let progesterone = 10;
+      if (cycleDay < ovDay) {
+        progesterone = 8 + (cycleDay / ovDay) * 6;
+      } else {
+        const lutealProgress = (cycleDay - ovDay) / Math.max(1, cycleLen - ovDay);
+        progesterone = 14 + Math.sin(lutealProgress * Math.PI) * 80;
+      }
+
+      // 3. LH Surge (0-100): baseline ~12, sharp spike around ovDay-1 to ovDay
+      const distFromOv = Math.abs(cycleDay - (ovDay - 0.3));
+      const lh = Math.min(98, Math.round(12 + 86 * Math.exp(-Math.pow(distFromOv / 1.15, 2))));
+
+      estrogen = Math.max(10, Math.min(98, Math.round(estrogen)));
+      progesterone = Math.max(8, Math.min(96, Math.round(progesterone)));
+
+      // Determine Phase Classification & Rich Guidance
+      let phaseKey = 'follicular';
+      let phaseName = 'Follicular Phase';
+      let shortName = 'Follicular';
+      let colorTheme = 'sky';
+      let socialEnergy = 85;
+      let tagline = '';
+      let biologyHTML = '';
+      let spaceshipAnalogy = '';
+      let moodPills = [];
+      let bestMoves = '';
+      let avoidMoves = '';
+      let samplePrompt = '';
+      let flirtBadge = '';
+
+      if (cycleDay <= bounds.menstrualEnd) {
+        phaseKey = 'menstrual';
+        phaseName = 'Menstrual Phase';
+        shortName = 'Period';
+        colorTheme = 'rose';
+        socialEnergy = Math.round(28 + (cycleDay / bounds.menstrualEnd) * 22);
+        tagline = 'Low Hormone Baseline — Rest, Comfort & Soft Caring Mode';
+        biologyHTML = `
+          <p><strong class="text-rose-300">Estrogen (${estrogen}%)</strong> and <strong class="text-purple-300">Progesterone (${progesterone}%)</strong> are at their lowest baseline while the body sheds the uterine lining.</p>
+          <p>Physical energy and iron levels dip during the first few days, though by Day ${bounds.menstrualEnd} estrogen slowly starts ticking upward again.</p>
+        `;
+        spaceshipAnalogy = `Her spaceship is in the docking bay recharging shields. The engines aren't broken—they're just in low-power battery-saver mode. Comfort, warmth, and zero pressure feel like premium fuel right now.`;
+        moodPills = ['Low Physical Energy', 'Craving Comfort', 'Inward Focus', 'Appreciates Warmth', 'Needs Low Pressure'];
+        bestMoves = `Be her calm, safe space. Check in sweetly without demanding long 3-hour rapid-fire banter. Send cozy or funny reels that don't require heavy mental effort to reply to.`;
+        avoidMoves = `Don't take short replies or early sleep personally (it's physical fatigue, not RSD rejection!). Avoid heavy emotional debates or pressuring her for immediate plans.`;
+        samplePrompt = `"No need to type long replies today, bas rest karo aaram se aur apna dhyan rakho 💖 Main yahi hu jab baat karne ka mann ho."`;
+        flirtBadge = 'Soft & Caring Mode';
+
+      } else if (cycleDay <= bounds.follicularEnd) {
+        const isLateFollicular = cycleDay >= bounds.follicularEnd - 2;
+        phaseKey = 'follicular';
+        phaseName = isLateFollicular ? 'Late Follicular Phase' : 'Follicular Phase';
+        shortName = 'Follicular';
+        colorTheme = 'sky';
+        socialEnergy = Math.round(68 + ((cycleDay - bounds.follicularStart) / Math.max(1, bounds.follicularEnd - bounds.follicularStart)) * 24);
+        tagline = isLateFollicular
+          ? 'Estrogen Near Peak — High Optimism, Banter & Pre-Ovulation Glow'
+          : 'Climbing Estrogen — Fresh Energy, Curiosity & Playful Mood';
+        biologyHTML = `
+          <p><strong class="text-sky-300">Estrogen (${estrogen}%)</strong> is climbing fast while <strong class="text-purple-300">Progesterone (${progesterone}%)</strong> stays quiet. Rising estrogen directly boosts <strong>serotonin and dopamine</strong> receptors in the brain.</p>
+          <p>${isLateFollicular ? 'Right now she is on the doorstep of her Ovulation Window—social battery, humor, and openness to connection are surging.' : 'After the low energy of her period, her brain feels lighter, more curious, and noticeably more talkative.'}</p>
+        `;
+        spaceshipAnalogy = `Her dopamine and serotonin fuel tanks are filling up fast! The spaceship shields are down, curiosity sensors are wide open, and she's ready for fun adventures, late-night laughs, and creative sparks.`;
+        moodPills = ['Upbeat & Talkative', 'High Dopamine', 'Playful Banter', 'Open to Plans', 'Creative Energy'];
+        bestMoves = `Prime time for playful teasing, late-night chats, showing off cool things you're building or sketching, and initiating fun conversations or voice notes.`;
+        avoidMoves = `Don't overthink or play it too safe/boring! She has the mental energy for fun back-and-forth banter right now—match her warmth confidently.`;
+        samplePrompt = `"Aaj bada acha mood lag raha hai 👀 Tell me, aaj raat kab tak jaagne ki permission hai mujhe?"`;
+        flirtBadge = 'High Banter Window';
+
+      } else if (cycleDay <= bounds.ovulationEnd) {
+        phaseKey = 'ovulatory';
+        phaseName = 'Ovulatory Window';
+        shortName = 'Ovulation';
+        colorTheme = 'amber';
+        socialEnergy = 96;
+        tagline = 'Peak Estrogen + LH Surge — Maximum Social & Flirty Energy';
+        biologyHTML = `
+          <p><strong class="text-sky-300">Estrogen (${estrogen}%)</strong> hits its absolute cycle peak, triggering a sharp <strong class="text-amber-300">LH Surge (${lh}%)</strong> alongside a subtle bump in testosterone.</p>
+          <p>Biologically, this 3-day window brings the highest confidence, social magnetism, verbal fluency, and receptiveness to romantic tension of the entire month.</p>
+        `;
+        spaceshipAnalogy = `Full nitro boost! All thrusters are firing at 100%. Social battery is maxed out, confidence is high, and she is most likely to be out at events, posting stories, or flirting boldly.`;
+        moodPills = ['Peak Confidence', 'Maximum Social Battery', 'Bold & Flirty', 'Outgoing / Events', 'High Energy'];
+        bestMoves = `Biological prime time! Flirt back with confidence, use playful callbacks, transition from texting to voice notes/calls, or suggest hanging out. Note: Because her social energy is maxed, she may also be busy with friends/events!`;
+        avoidMoves = `If she's out dancing or hanging with friends, don't let RSD trick you into feeling left out—she's just riding her peak social wave. Stay cool, confident, and warm.`;
+        samplePrompt = `"Waise you've been on my mind all day—sach batao, kaunsa distraction spell cast kiya hai mujhpe? 😌✨"`;
+        flirtBadge = 'Peak Flirt Window 🔥';
+
+      } else if (cycleDay <= bounds.earlyLutealEnd) {
+        phaseKey = 'early_luteal';
+        phaseName = 'Early Luteal Phase';
+        shortName = 'Early Luteal';
+        colorTheme = 'indigo';
+        socialEnergy = Math.round(74 - ((cycleDay - bounds.earlyLutealStart) / Math.max(1, bounds.earlyLutealEnd - bounds.earlyLutealStart)) * 18);
+        tagline = 'Rising Progesterone — Calm, Grounded & Cozy Bonding Vibe';
+        biologyHTML = `
+          <p>After ovulation, <strong class="text-purple-300">Progesterone (${progesterone}%)</strong> rises steadily to become the dominant hormone, accompanied by a moderate secondary wave of <strong class="text-sky-300">Estrogen (${estrogen}%)</strong>.</p>
+          <p>Progesterone stimulates GABA receptors in the brain—acting as a natural calming agent. The high-octane party energy shifts toward deeper, calmer 1-on-1 connection.</p>
+        `;
+        spaceshipAnalogy = `After the nitro speed boost of ovulation, the spaceship switches into smooth autopilot cruise mode. She prefers cozy 1-on-1 talks and deep connection over loud chaos.`;
+        moodPills = ['Calm & Steady', 'Cozy 1-on-1 Vibe', 'Caring / Protective', 'Grounded', 'Prefers Depth'];
+        bestMoves = `Lean into your sweet, caring 1-on-1 dynamic! Deep late-night talks, sharing personal art/stories in private DMs, and letting her be the caring boss work amazingly well here.`;
+        avoidMoves = `Avoid public pressure (like public story tags) or chaotic group drama. Keep the vibe private, cozy, and emotionally safe between just the two of you.`;
+        samplePrompt = `"Aaj din bhar kaam karke thak gaya, ab bas tumसे thodi der aaram se baat karni hai 🥺 How was your day?"`;
+        flirtBadge = 'Cozy 1-on-1 Bonding';
+
+      } else {
+        phaseKey = 'late_luteal';
+        phaseName = 'Late Luteal / PMS Window';
+        shortName = 'Late Luteal / PMS';
+        colorTheme = 'purple';
+        socialEnergy = Math.round(45 - ((cycleDay - bounds.lateLutealStart) / Math.max(1, cycleLen - bounds.lateLutealStart)) * 18);
+        tagline = 'Hormone Drop — Lower Social Battery, Needs Patience & Extra Care';
+        biologyHTML = `
+          <p>Both <strong class="text-sky-300">Estrogen (${estrogen}%)</strong> and <strong class="text-purple-300">Progesterone (${progesterone}%)</strong> drop sharply in the final days before her next period.</p>
+          <p>This sudden withdrawal temporarily dips serotonin levels, which can bring lower patience, sensory fatigue, cravings, or a need for quiet downtime.</p>
+        `;
+        spaceshipAnalogy = `Fuel levels are dropping right before the next pit stop, so the cockpit warning lights are extra sensitive. Even small bumps feel bigger right now—be the calm co-pilot who brings snacks and zero stress.`;
+        moodPills = ['Low Social Battery', 'Easily Tired', 'Needs Reassurance', 'Cravings / Comfort', 'Zero Drama Zone'];
+        bestMoves = `Be extra steady, patient, and validating. If she vents, just listen and validate without trying to argue. Keep texts warm, sweet, and completely stress-free.`;
+        avoidMoves = `CRITICAL FOR RSD: If she replies slower or sounds slightly dry during these days, it is 99% hormone fatigue—NOT disgust with you! Do not panic or double-text anxiously.`;
+        samplePrompt = `"Just dropping a quick reminder that you're amazing 💖 Aaj bilkul stress mat lena, take it easy tonight!"`;
+        flirtBadge = 'Patience & Comfort Mode';
+      }
+
+      return {
+        cycleDay,
+        phaseKey,
+        phaseName,
+        shortName,
+        colorTheme,
+        estrogen,
+        progesterone,
+        lh,
+        socialEnergy,
+        tagline,
+        biologyHTML,
+        spaceshipAnalogy,
+        moodPills,
+        bestMoves,
+        avoidMoves,
+        samplePrompt,
+        flirtBadge,
+        bounds
+      };
+    }
+
+    /**
+     * Given any ISO date, calculates which cycle day it falls on and returns full data
+     */
+    function evaluateDate(isoTarget) {
+      const diff = diffInDays(isoTarget, state.lastPeriodDate);
+      const cLen = state.cycleLength;
+      const pLen = state.periodLength;
+
+      const cycleDay = (((diff % cLen) + cLen) % cLen) + 1;
+      const cycleIndex = Math.floor(diff / cLen);
+      const currentCycleStartISO = addDaysISO(state.lastPeriodDate, cycleIndex * cLen);
+      const nextPeriodStartISO = addDaysISO(currentCycleStartISO, cLen);
+      const daysUntilNextPeriod = cLen - cycleDay + 1;
+
+      const dayData = getCycleDayData(cycleDay, cLen, pLen);
+
+      return {
+        isoDate: isoTarget,
+        diffFromOrigin: diff,
+        cycleDay,
+        cycleIndex,
+        currentCycleStartISO,
+        nextPeriodStartISO,
+        daysUntilNextPeriod,
+        ...dayData
+      };
+    }
+
+    /********************************************************************
+     * THEME PALETTE HELPER
+     ********************************************************************/
+    const THEME_STYLES = {
+      rose: {
+        borderTop: 'border-t-rose-500',
+        badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+        dot: 'bg-rose-400',
+        pill: 'bg-rose-500/15 text-rose-200 border-rose-500/30',
+        calBg: 'bg-rose-500/20 border-rose-500/40 text-rose-200 hover:bg-rose-500/30',
+        glow: 'bg-rose-500/15'
+      },
+      sky: {
+        borderTop: 'border-t-sky-400',
+        badge: 'bg-sky-500/20 text-sky-300 border-sky-400/40',
+        dot: 'bg-sky-400',
+        pill: 'bg-sky-500/15 text-sky-200 border-sky-500/30',
+        calBg: 'bg-sky-500/20 border-sky-500/40 text-sky-200 hover:bg-sky-500/30',
+        glow: 'bg-sky-500/15'
+      },
+      amber: {
+        borderTop: 'border-t-amber-400',
+        badge: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
+        dot: 'bg-amber-400',
+        pill: 'bg-amber-500/15 text-amber-200 border-amber-500/30',
+        calBg: 'bg-amber-500/25 border-amber-400/50 text-amber-100 hover:bg-amber-500/35',
+        glow: 'bg-amber-500/15'
+      },
+      indigo: {
+        borderTop: 'border-t-indigo-400',
+        badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/40',
+        dot: 'bg-indigo-400',
+        pill: 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30',
+        calBg: 'bg-indigo-500/20 border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/30',
+        glow: 'bg-indigo-500/15'
+      },
+      purple: {
+        borderTop: 'border-t-purple-400',
+        badge: 'bg-purple-500/20 text-purple-300 border-purple-400/40',
+        dot: 'bg-purple-400',
+        pill: 'bg-purple-500/15 text-purple-200 border-purple-500/30',
+        calBg: 'bg-purple-500/20 border-purple-500/40 text-purple-200 hover:bg-purple-500/30',
+        glow: 'bg-purple-500/15'
+      }
+    };
+
+    /********************************************************************
+     * UI RENDER FUNCTIONS
+     ********************************************************************/
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const badge = document.getElementById('savedStatusBadge');
+        badge.classList.remove('opacity-90');
+        badge.classList.add('text-emerald-300');
+        setTimeout(() => badge.classList.add('opacity-90'), 400);
+      } catch (e) {
+        // Ignore storage errors in restricted environments
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = { ...DEFAULT_STATE, ...parsed };
+        }
+      } catch (e) {
+        state = { ...DEFAULT_STATE };
+      }
+    }
+
+    function renderAll() {
+      // Sync Form Inputs
+      document.getElementById('lastPeriodInput').value = state.lastPeriodDate;
+      document.getElementById('targetDateInput').value = state.targetDate;
+      document.getElementById('cycleLengthSlider').value = state.cycleLength;
+      document.getElementById('cycleLengthValue').textContent = `${state.cycleLength} Days`;
+      document.getElementById('periodLengthSlider').value = state.periodLength;
+      document.getElementById('periodLengthValue').textContent = `${state.periodLength} Days`;
+
+      // Spaceship Mode Toggle Label
+      const explainLabel = document.getElementById('explainModeLabel');
+      const spaceshipBox = document.getElementById('spaceshipBox');
+      explainLabel.textContent = `Spaceship Mode: ${state.spaceshipMode ? 'ON' : 'OFF'}`;
+      spaceshipBox.style.display = state.spaceshipMode ? 'block' : 'none';
+
+      // Evaluate Target Date
+      const current = evaluateDate(state.targetDate);
+      const style = THEME_STYLES[current.colorTheme];
+
+      // 1. Update Hero Card
+      const heroCard = document.getElementById('heroPhaseCard');
+      heroCard.className = `lg:col-span-5 glass-card rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between border-t-4 ${style.borderTop} transition-all duration-300`;
+
+      document.getElementById('targetDateFormatted').textContent = formatFullDate(state.targetDate);
+      const phaseBadge = document.getElementById('phaseBadge');
+      phaseBadge.className = `inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${style.badge}`;
+      phaseBadge.innerHTML = `<span class="w-2 h-2 rounded-full ${style.dot} animate-pulse"></span> ${current.phaseName}`;
+
+      document.getElementById('cycleDayDisplay').textContent = `Day ${current.cycleDay}`;
+      document.getElementById('totalCycleDaysHero').textContent = state.cycleLength;
+      document.getElementById('phaseTagline').textContent = current.tagline;
+
+      const pct = Math.round((current.cycleDay / state.cycleLength) * 100);
+      document.getElementById('cycleProgressLabel').textContent = `Cycle Progress: ${pct}%`;
+      document.getElementById('daysUntilPeriodLabel').textContent =
+        `Next Period in ${current.daysUntilNextPeriod} Day${current.daysUntilNextPeriod === 1 ? '' : 's'} (${formatShortDate(current.nextPeriodStartISO)})`;
+
+      // Render Segmented Cycle Bar
+      const segBar = document.getElementById('segmentedCycleBar');
+      segBar.innerHTML = '';
+      for (let d = 1; d <= state.cycleLength; d++) {
+        const dInfo = getCycleDayData(d, state.cycleLength, state.periodLength);
+        const seg = document.createElement('div');
+        const isCurrent = d === current.cycleDay;
+        let bgClass = 'bg-slate-700';
+        if (dInfo.colorTheme === 'rose') bgClass = 'bg-rose-500';
+        if (dInfo.colorTheme === 'sky') bgClass = 'bg-sky-400';
+        if (dInfo.colorTheme === 'amber') bgClass = 'bg-amber-400';
+        if (dInfo.colorTheme === 'indigo') bgClass = 'bg-indigo-400';
+        if (dInfo.colorTheme === 'purple') bgClass = 'bg-purple-400';
+
+        seg.className = `h-full flex-1 rounded-[2px] transition-all ${bgClass} ${
+          isCurrent ? 'ring-2 ring-white scale-y-125 opacity-100 z-10' : d < current.cycleDay ? 'opacity-85' : 'opacity-30'
+        }`;
+        seg.title = `Day ${d}: ${dInfo.phaseName}`;
+        segBar.appendChild(seg);
+      }
+
+      // Hormone Meters
+      document.getElementById('estValText').textContent = `${current.estrogen}%`;
+      document.getElementById('estBar').style.width = `${current.estrogen}%`;
+      document.getElementById('estStatusText').textContent =
+        current.estrogen > 75 ? 'High (Dopamine boost)' : current.estrogen > 40 ? 'Moderate / Climbing' : 'Low baseline';
+
+      document.getElementById('progValText').textContent = `${current.progesterone}%`;
+      document.getElementById('progBar').style.width = `${current.progesterone}%`;
+      document.getElementById('progStatusText').textContent =
+        current.progesterone > 60 ? 'Dominant (Calm/Rest)' : current.progesterone > 25 ? 'Rising steadily' : 'Low baseline';
+
+      document.getElementById('energyValText').textContent = `${current.socialEnergy}%`;
+      document.getElementById('energyBar').style.width = `${current.socialEnergy}%`;
+      document.getElementById('energyStatusText').textContent =
+        current.socialEnergy > 80 ? 'Peak / Outgoing' : current.socialEnergy > 55 ? 'Steady / Cozy' : 'Low / Needs Comfort';
+
+      // Ovulation Countdown Badge
+      const ovDay = current.bounds.ovulationCenter;
+      const ovBadge = document.getElementById('ovulationCountdownBadge');
+      if (current.cycleDay === ovDay) {
+        ovBadge.textContent = 'Peak Ovulation Day 🌟';
+        ovBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      } else if (current.cycleDay < ovDay) {
+        const diffOv = ovDay - current.cycleDay;
+        ovBadge.textContent = `Ovulation Peak in ${diffOv}d`;
+        ovBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30';
+      } else {
+        ovBadge.textContent = `Post-Ovulation (Luteal)`;
+        ovBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30';
+      }
+
+      // Biology & Spaceship Text
+      document.getElementById('biologyDescription').innerHTML = current.biologyHTML;
+      document.getElementById('spaceshipText').textContent = current.spaceshipAnalogy;
+
+      // Mood Pills
+      const pillsContainer = document.getElementById('moodPillsContainer');
+      pillsContainer.innerHTML = current.moodPills
+        .map(pill => `<span class="px-2.5 py-1 rounded-full text-xs font-medium border ${style.pill}">${pill}</span>`)
+        .join('');
+
+      // Communication & Vibe Playbook
+      document.getElementById('flirtWindowBadge').textContent = current.flirtBadge;
+      document.getElementById('bestMovesText').textContent = current.bestMoves;
+      document.getElementById('avoidMovesText').textContent = current.avoidMoves;
+      document.getElementById('sampleTextPrompt').textContent = current.samplePrompt;
+
+      // Render 7-Day Rolling Forecast Strip
+      renderSevenDayStrip();
+
+      // Render Interactive Hormone Chart
+      renderHormoneChart(current);
+
+      // Sync Chart Scrubber
+      const scrubber = document.getElementById('chartDayScrubber');
+      scrubber.max = state.cycleLength;
+      scrubber.value = current.cycleDay;
+      document.getElementById('scrubberDayReadout').textContent = `Day ${current.cycleDay} (${formatShortDate(state.targetDate)})`;
+
+      // Render Monthly Calendar & Next 3 Cycles Table
+      renderCalendar();
+      renderUpcomingCyclesTable();
+    }
+
+    /********************************************************************
+     * 7-DAY ROLLING FORECAST STRIP
+     ********************************************************************/
+    function renderSevenDayStrip() {
+      const container = document.getElementById('sevenDayStrip');
+      container.innerHTML = '';
+
+      for (let offset = 0; offset < 7; offset++) {
+        const dISO = addDaysISO(state.targetDate, offset);
+        const info = evaluateDate(dISO);
+        const style = THEME_STYLES[info.colorTheme];
+        const isSelected = offset === 0;
+        const isOct24Today = dISO === '2026-10-24';
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `text-left p-3 rounded-xl border transition-all flex flex-col justify-between ${
+          isSelected
+            ? 'bg-slate-800/95 border-white/60 ring-2 ring-sky-400/50 shadow-lg'
+            : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/60'
+        }`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
+              <span>${formatShortDate(dISO)}</span>
+              ${isOct24Today ? '<span class="px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 text-[10px]">Today</span>' : `<span class="text-slate-500">+${offset}d</span>`}
+            </div>
+            <div class="text-sm font-bold text-white font-mono">Day ${info.cycleDay}</div>
+            <div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${style.badge}">
+              <span class="w-1.5 h-1.5 rounded-full ${style.dot}"></span>
+              <span class="truncate">${info.shortName}</span>
+            </div>
+          </div>
+          <div class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+            <span class="text-slate-400">Social:</span>
+            <span class="font-mono font-bold text-slate-200">${info.socialEnergy}%</span>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          state.targetDate = dISO;
+          const dt = parseISODate(dISO);
+          calendarViewYear = dt.getUTCFullYear();
+          calendarViewMonth = dt.getUTCMonth();
+          saveState();
+          renderAll();
+        });
+
+        container.appendChild(card);
+      }
+    }
+
+    /********************************************************************
+     * INTERACTIVE HORMONE & ENERGY SVG CHART
+     ********************************************************************/
+    function buildSmoothPath(points) {
+      if (!points.length) return '';
+      if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+      let path = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i === 0 ? 0 : i - 1];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+      }
+      return path;
+    }
+
+    function renderHormoneChart(currentInfo) {
+      const svg = document.getElementById('hormoneChartSvg');
+      const W = 900;
+      const H = 310;
+      const padL = 44;
+      const padR = 24;
+      const padT = 28;
+      const padB = 42;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const cLen = state.cycleLength;
+      const pLen = state.periodLength;
+      const bounds = getPhaseBounds(cLen, pLen);
+
+      const xForDay = (day) => padL + ((day - 1) / Math.max(1, cLen - 1)) * plotW;
+      const yForVal = (val) => padT + plotH - (val / 100) * plotH;
+
+      // Collect points for each day
+      const estPoints = [];
+      const progPoints = [];
+      const lhPoints = [];
+
+      for (let d = 1; d <= cLen; d++) {
+        const info = getCycleDayData(d, cLen, pLen);
+        const x = xForDay(d);
+        estPoints.push({ x, y: yForVal(info.estrogen), val: info.estrogen, day: d });
+        progPoints.push({ x, y: yForVal(info.progesterone), val: info.progesterone, day: d });
+        lhPoints.push({ x, y: yForVal(info.lh), val: info.lh, day: d });
+      }
+
+      const estPath = buildSmoothPath(estPoints);
+      const progPath = buildSmoothPath(progPoints);
+      const lhPath = buildSmoothPath(lhPoints);
+
+      const estArea = `${estPath} L ${xForDay(cLen).toFixed(1)} ${(padT + plotH).toFixed(1)} L ${xForDay(1).toFixed(1)} ${(padT + plotH).toFixed(1)} Z`;
+      const progArea = `${progPath} L ${xForDay(cLen).toFixed(1)} ${(padT + plotH).toFixed(1)} L ${xForDay(1).toFixed(1)} ${(padT + plotH).toFixed(1)} Z`;
+
+      // Phase background zones
+      const zones = [
+        { start: 1, end: bounds.menstrualEnd + 0.5, label: 'Menstrual', color: 'rgba(244, 63, 94, 0.10)', textColor: '#fda4af' },
+        { start: bounds.menstrualEnd + 0.5, end: bounds.ovulationStart - 0.5, label: 'Follicular', color: 'rgba(56, 189, 248, 0.10)', textColor: '#7dd3fc' },
+        { start: bounds.ovulationStart - 0.5, end: bounds.ovulationEnd + 0.5, label: 'Ovulation', color: 'rgba(251, 191, 36, 0.14)', textColor: '#fde68a' },
+        { start: bounds.ovulationEnd + 0.5, end: bounds.earlyLutealEnd + 0.5, label: 'Early Luteal', color: 'rgba(129, 140, 248, 0.10)', textColor: '#c7d2fe' },
+        { start: bounds.earlyLutealEnd + 0.5, end: cLen, label: 'Late Luteal / PMS', color: 'rgba(192, 132, 252, 0.10)', textColor: '#e9d5ff' }
+      ];
+
+      let zonesSvg = '';
+      zones.forEach(z => {
+        const x1 = xForDay(Math.max(1, z.start));
+        const x2 = xForDay(Math.min(cLen, z.end));
+        const w = Math.max(0, x2 - x1);
+        const midX = x1 + w / 2;
+        zonesSvg += `
+          <rect x="${x1.toFixed(1)}" y="${padT}" width="${w.toFixed(1)}" height="${plotH}" fill="${z.color}" />
+          <text x="${midX.toFixed(1)}" y="${padT + 16}" fill="${z.textColor}" font-size="10" font-weight="600" text-anchor="middle" opacity="0.85">${z.label}</text>
+        `;
+      });
+
+      // Horizontal Grid Lines
+      let gridSvg = '';
+      [0, 25, 50, 75, 100].forEach(val => {
+        const y = yForVal(val);
+        gridSvg += `
+          <line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#1e293b" stroke-dasharray="4 4" stroke-width="1" />
+          <text x="${padL - 8}" y="${(y + 4).toFixed(1)}" fill="#64748b" font-size="10" font-family="JetBrains Mono" text-anchor="end">${val}%</text>
+        `;
+      });
+
+      // X-Axis Day Ticks & Dates
+      let xTicksSvg = '';
+      for (let d = 1; d <= cLen; d++) {
+        const x = xForDay(d);
+        const isActive = d === currentInfo.cycleDay;
+        const showLabel = d === 1 || d === cLen || d % 2 === 0 || isActive;
+        if (showLabel) {
+          const dISO = addDaysISO(currentInfo.currentCycleStartISO, d - 1);
+          xTicksSvg += `
+            <line x1="${x.toFixed(1)}" y1="${padT + plotH}" x2="${x.toFixed(1)}" y2="${padT + plotH + 5}" stroke="${isActive ? '#38bdf8' : '#334155'}" stroke-width="1.5" />
+            <text x="${x.toFixed(1)}" y="${padT + plotH + 17}" fill="${isActive ? '#ffffff' : '#94a3b8'}" font-size="${isActive ? '11' : '10'}" font-weight="${isActive ? '700' : '500'}" font-family="JetBrains Mono" text-anchor="middle">D${d}</text>
+            <text x="${x.toFixed(1)}" y="${padT + plotH + 30}" fill="${isActive ? '#38bdf8' : '#64748b'}" font-size="9" font-family="Inter" text-anchor="middle">${formatShortDate(dISO)}</text>
+          `;
+        }
+      }
+
+      // Active Day Marker Line & Nodes
+      const activeX = xForDay(currentInfo.cycleDay);
+      const activeEstY = yForVal(currentInfo.estrogen);
+      const activeProgY = yForVal(currentInfo.progesterone);
+      const activeLhY = yForVal(currentInfo.lh);
+
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="estGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+          </linearGradient>
+          <linearGradient id="progGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c084fc" stop-opacity="0.30"/>
+            <stop offset="100%" stop-color="#c084fc" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Phase Shaded Zones -->
+        ${zonesSvg}
+
+        <!-- Grid Lines -->
+        ${gridSvg}
+
+        <!-- Area Fills -->
+        <path d="${estArea}" fill="url(#estGrad)" />
+        <path d="${progArea}" fill="url(#progGrad)" />
+
+        <!-- Hormone Curves -->
+        <path d="${lhPath}" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 4" opacity="0.85" />
+        <path d="${progPath}" fill="none" stroke="#c084fc" stroke-width="2.8" />
+        <path d="${estPath}" fill="none" stroke="#38bdf8" stroke-width="3.2" />
+
+        <!-- Active Day Vertical Indicator -->
+        <line x1="${activeX.toFixed(1)}" y1="${padT}" x2="${activeX.toFixed(1)}" y2="${padT + plotH}" stroke="#f8fafc" stroke-width="1.8" stroke-dasharray="3 3" />
+
+        <!-- Active Day Readout Pill at Top -->
+        <g transform="translate(${Math.min(W - 115, Math.max(115, activeX)).toFixed(1)}, ${padT - 8})">
+          <rect x="-85" y="-16" width="170" height="20" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="1" />
+          <text x="0" y="-3" fill="#f8fafc" font-size="10" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">
+            Day ${currentInfo.cycleDay} • ${formatShortDate(state.targetDate)}
+          </text>
+        </g>
+
+        <!-- Active Points -->
+        <circle cx="${activeX.toFixed(1)}" cy="${activeLhY.toFixed(1)}" r="4.5" fill="#fbbf24" stroke="#0f172a" stroke-width="2" />
+        <circle cx="${activeX.toFixed(1)}" cy="${activeProgY.toFixed(1)}" r="5.5" fill="#c084fc" stroke="#0f172a" stroke-width="2" />
+        <circle cx="${activeX.toFixed(1)}" cy="${activeEstY.toFixed(1)}" r="6" fill="#38bdf8" stroke="#ffffff" stroke-width="2" />
+
+        <!-- X-Axis Labels -->
+        ${xTicksSvg}
+      `;
+    }
+
+    /********************************************************************
+     * INTERACTIVE COLOR-CODED MONTHLY CALENDAR
+     ********************************************************************/
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      document.getElementById('calendarMonthTitle').textContent = `${monthNames[calendarViewMonth]} ${calendarViewYear}`;
+
+      const firstDayOfMonth = new Date(Date.UTC(calendarViewYear, calendarViewMonth, 1));
+      const startWeekday = firstDayOfMonth.getUTCDay(); // 0 = Sun .. 6 = Sat
+      const daysInMonth = new Date(Date.UTC(calendarViewYear, calendarViewMonth + 1, 0)).getUTCDate();
+
+      // Leading empty cells
+      for (let i = 0; i < startWeekday; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'h-14 sm:h-16 rounded-xl bg-slate-950/30 border border-slate-900/40';
+        grid.appendChild(empty);
+      }
+
+      // Day cells
+      for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+        const mStr = String(calendarViewMonth + 1).padStart(2, '0');
+        const dStr = String(dayNum).padStart(2, '0');
+        const cellISO = `${calendarViewYear}-${mStr}-${dStr}`;
+
+        const info = evaluateDate(cellISO);
+        const style = THEME_STYLES[info.colorTheme];
+        const isSelected = cellISO === state.targetDate;
+        const isOriginStart = cellISO === state.lastPeriodDate;
+        const isTodayOct24 = cellISO === '2026-10-24';
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `h-14 sm:h-16 rounded-xl p-1.5 border text-left flex flex-col justify-between transition-all relative ${style.calBg} ${
+          isSelected ? 'ring-2 ring-white scale-[1.03] z-10 shadow-lg' : ''
+        }`;
+
+        cell.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs font-bold font-mono ${isSelected ? 'text-white' : ''}">${dayNum}</span>
+            <span class="text-[10px] font-mono opacity-80">D${info.cycleDay}</span>
+          </div>
+          <div class="flex items-center justify-between w-full">
+            <span class="text-[9px] sm:text-[10px] font-medium truncate leading-tight opacity-90">
+              ${info.cycleDay === 1 ? '🩸 Day 1' : info.cycleDay === info.bounds.ovulationCenter ? '✨ Peak' : info.shortName}
+            </span>
+            ${isTodayOct24 ? '<span class="w-1.5 h-1.5 rounded-full bg-white" title="Today (Oct 24)"></span>' : ''}
+            ${isOriginStart ? '<span class="w-1.5 h-1.5 rounded-full bg-rose-400" title="Oct 13 Origin"></span>' : ''}
+          </div>
+        `;
+
+        cell.addEventListener('click', () => {
+          state.targetDate = cellISO;
+          saveState();
+          renderAll();
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    /********************************************************************
+     * UPCOMING 3 CYCLES PREDICTOR TABLE
+     ********************************************************************/
+    function renderUpcomingCyclesTable() {
+      const tbody = document.getElementById('upcomingCyclesTable');
+      tbody.innerHTML = '';
+
+      const currentInfo = evaluateDate(state.targetDate);
+      const baseStartISO = currentInfo.currentCycleStartISO;
+      const cLen = state.cycleLength;
+      const pLen = state.periodLength;
+      const bounds = getPhaseBounds(cLen, pLen);
+
+      for (let i = 0; i < 3; i++) {
+        const cycleStart = addDaysISO(baseStartISO, i * cLen);
+        const periodEnd = addDaysISO(cycleStart, pLen - 1);
+
+        // Peak Social & Flirt Window: Late Follicular + Ovulation (e.g., OvulationStart - 3 to OvulationEnd)
+        const peakStart = addDaysISO(cycleStart, Math.max(pLen, bounds.ovulationStart - 4));
+        const peakEnd = addDaysISO(cycleStart, bounds.ovulationEnd - 1);
+
+        // Late Luteal / PMS Caring Window
+        const pmsStart = addDaysISO(cycleStart, bounds.lateLutealStart - 1);
+        const pmsEnd = addDaysISO(cycleStart, cLen - 1);
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-900/60 transition cursor-pointer';
+        tr.innerHTML = `
+          <td class="py-2.5 pr-2 font-sans font-semibold text-slate-300">
+            ${i === 0 ? 'Current' : i === 1 ? 'Next (+1)' : 'Cycle +2'}
+          </td>
+          <td class="py-2.5 px-2 text-rose-300">
+            ${formatShortDate(cycleStart)} – ${formatShortDate(periodEnd)}
+          </td>
+          <td class="py-2.5 px-2 text-amber-300">
+            ${formatShortDate(peakStart)} – ${formatShortDate(peakEnd)}
+          </td>
+          <td class="py-2.5 pl-2 text-purple-300">
+            ${formatShortDate(pmsStart)} – ${formatShortDate(pmsEnd)}
+          </td>
+        `;
+
+        // Clicking a row jumps targetDate to that cycle's start date
+        tr.addEventListener('click', () => {
+          state.targetDate = cycleStart;
+          const dt = parseISODate(cycleStart);
+          calendarViewYear = dt.getUTCFullYear();
+          calendarViewMonth = dt.getUTCMonth();
+          saveState();
+          renderAll();
+        });
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    /********************************************************************
+     * EVENT LISTENERS & INTERACTIVITY
+     ********************************************************************/
+    function initEvents() {
+      // Last Period Date Change
+      document.getElementById('lastPeriodInput').addEventListener('change', (e) => {
+        if (e.target.value) {
+          state.lastPeriodDate = e.target.value;
+          saveState();
+          renderAll();
+        }
+      });
+
+      // Target Date Change
+      document.getElementById('targetDateInput').addEventListener('change', (e) => {
+        if (e.target.value) {
+          state.targetDate = e.target.value;
+          const dt = parseISODate(state.targetDate);
+          calendarViewYear = dt.getUTCFullYear();
+          calendarViewMonth = dt.getUTCMonth();
+          saveState();
+          renderAll();
+        }
+      });
+
+      // Cycle Length Slider
+      document.getElementById('cycleLengthSlider').addEventListener('input', (e) => {
+        state.cycleLength = parseInt(e.target.value, 10);
+        saveState();
+        renderAll();
+      });
+
+      // Period Duration Slider
+      document.getElementById('periodLengthSlider').addEventListener('input', (e) => {
+        state.periodLength = parseInt(e.target.value, 10);
+        saveState();
+        renderAll();
+      });
+
+      // Quick Jump Buttons ('Today', '-1d', '+1d', '+3d', '+7d')
+      document.querySelectorAll('.jump-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const jump = btn.getAttribute('data-jump');
+          if (jump === 'today') {
+            state.targetDate = '2026-10-24';
+          } else {
+            const delta = parseInt(jump, 10);
+            state.targetDate = addDaysISO(state.targetDate, delta);
+          }
+          const dt = parseISODate(state.targetDate);
+          calendarViewYear = dt.getUTCFullYear();
+          calendarViewMonth = dt.getUTCMonth();
+          saveState();
+          renderAll();
+        });
+      });
+
+      // Set Oct 13 Only Button
+      document.getElementById('btnSetOct13Only').addEventListener('click', () => {
+        state.lastPeriodDate = '2026-10-13';
+        saveState();
+        renderAll();
+      });
+
+      // Full Reset to Oct 13 & Today Oct 24 Preset
+      document.getElementById('btnResetOct13').addEventListener('click', () => {
+        state = { ...DEFAULT_STATE };
+        calendarViewYear = 2026;
+        calendarViewMonth = 9;
+        saveState();
+        renderAll();
+      });
+
+      // Spaceship Analogy Mode Toggle
+      document.getElementById('btnExplainToggle').addEventListener('click', () => {
+        state.spaceshipMode = !state.spaceshipMode;
+        saveState();
+        renderAll();
+      });
+
+      // Chart Day Scrubber Slider
+      document.getElementById('chartDayScrubber').addEventListener('input', (e) => {
+        const chosenDay = parseInt(e.target.value, 10);
+        const currentInfo = evaluateDate(state.targetDate);
+        state.targetDate = addDaysISO(currentInfo.currentCycleStartISO, chosenDay - 1);
+        const dt = parseISODate(state.targetDate);
+        calendarViewYear = dt.getUTCFullYear();
+        calendarViewMonth = dt.getUTCMonth();
+        saveState();
+        renderAll();
+      });
+
+      // Interactive SVG Chart Dragging / Clicking
+      const svg = document.getElementById('hormoneChartSvg');
+      let isDraggingChart = false;
+
+      function handleChartPointer(clientX) {
+        const rect = svg.getBoundingClientRect();
+        const relX = ((clientX - rect.left) / rect.width) * 900;
+        const padL = 44;
+        const padR = 24;
+        const plotW = 900 - padL - padR;
+        const clampedX = Math.max(padL, Math.min(900 - padR, relX));
+        const ratio = (clampedX - padL) / plotW;
+        const chosenDay = Math.round(1 + ratio * (state.cycleLength - 1));
+
+        const currentInfo = evaluateDate(state.targetDate);
+        const newTargetISO = addDaysISO(currentInfo.currentCycleStartISO, chosenDay - 1);
+        if (newTargetISO !== state.targetDate) {
+          state.targetDate = newTargetISO;
+          const dt = parseISODate(state.targetDate);
+          calendarViewYear = dt.getUTCFullYear();
+          calendarViewMonth = dt.getUTCMonth();
+          saveState();
+          renderAll();
+        }
+      }
+
+      svg.addEventListener('pointerdown', (e) => {
+        isDraggingChart = true;
+        handleChartPointer(e.clientX);
+      });
+      window.addEventListener('pointermove', (e) => {
+        if (isDraggingChart) {
+          handleChartPointer(e.clientX);
+        }
+      });
+      window.addEventListener('pointerup', () => {
+        isDraggingChart = false;
+      });
+
+      // Calendar Month Navigation
+      document.getElementById('btnPrevMonth').addEventListener('click', () => {
+        calendarViewMonth--;
+        if (calendarViewMonth < 0) {
+          calendarViewMonth = 11;
+          calendarViewYear--;
+        }
+        renderCalendar();
+      });
+
+      document.getElementById('btnNextMonth').addEventListener('click', () => {
+        calendarViewMonth++;
+        if (calendarViewMonth > 11) {
+          calendarViewMonth = 0;
+          calendarViewYear++;
+        }
+        renderCalendar();
+      });
+
+      // Copy Suggested Text Idea
+      document.getElementById('btnCopyPrompt').addEventListener('click', () => {
+        const text = document.getElementById('sampleTextPrompt').textContent;
+        const tempInput = document.createElement('textarea');
+        tempInput.value = text;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+
+        const copyBtnText = document.getElementById('copyBtnText');
+        copyBtnText.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtnText.textContent = 'Copy Idea';
+        }, 1500);
+      });
+    }
+
+    /********************************************************************
+     * INITIALIZE APP ON LOAD
+     ********************************************************************/
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadState();
+      const dt = parseISODate(state.targetDate);
+      calendarViewYear = dt.getUTCFullYear();
+      calendarViewMonth = dt.getUTCMonth();
+      initEvents();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
